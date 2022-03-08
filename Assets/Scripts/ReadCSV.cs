@@ -7,17 +7,17 @@ public class ReadCSV : MonoBehaviour
 {
 
     List<Questions> questions = new List<Questions>();
-    [SerializeField] TextAsset ta_QuestionInformation;
-    [SerializeField] QuestionScriptObject q1, q2, q3, q4, q5;
-    int int_NumberOfQuestions;
+    [SerializeField] TextAsset ta_Question_Information;
+    [SerializeField] QuestionScriptObject q;
+    int int_Number_Of_Questions, int_Points;
 
-    // On start, load the CSV file and read it
+    // On start, load the CSV file and read it. Assigns each question to an array separating the right and wrong answers
     void Start() {
 
-        string[] str_QuestionData = ta_QuestionInformation.text.Split(new char[] {'\n'});
-        int_NumberOfQuestions = str_QuestionData.Length;
+        string[] str_QuestionData = ta_Question_Information.text.Split(new char[] {'\n'});
+        int_Number_Of_Questions = str_QuestionData.Length;
 
-        for(int i = 0; i < int_NumberOfQuestions - 1; i++) {
+        for(int i = 0; i < int_Number_Of_Questions - 1; i++) {
             
             string[] row = str_QuestionData[i].Split(new char[] {','});
             Questions q = new Questions();
@@ -29,44 +29,33 @@ public class ReadCSV : MonoBehaviour
 
         }
 
-        for (int j = 1; j <= 5; j++) {
+    }
 
-            int index = Random.Range(1, int_NumberOfQuestions);
+    //Chooses a randome number from 1 - 150, then based on the value gets that question and assigns it to the scriptable object
+    public void SetQuestion() {
 
-            if (j == 1)
-            {
-                q1.str_Question = questions[index].str_Question;
-                q1.str_RightAnswer = questions[index].str_RightAnswer;
-                q1.str_WrongAnswer = questions[index].str_WrongAnswer;
-            }
-            else if (j == 2)
-            {
-                q2.str_Question = questions[index].str_Question;
-                q2.str_RightAnswer = questions[index].str_RightAnswer;
-                q2.str_WrongAnswer = questions[index].str_WrongAnswer;
-            }
-            else if (j == 3)
-            {
-                q3.str_Question = questions[index].str_Question;
-                q3.str_RightAnswer = questions[index].str_RightAnswer;
-                q3.str_WrongAnswer = questions[index].str_WrongAnswer;
-            }
-            else if (j == 4)
-            {
-                q4.str_Question = questions[index].str_Question;
-                q4.str_RightAnswer = questions[index].str_RightAnswer;
-                q4.str_WrongAnswer = questions[index].str_WrongAnswer;
-            }
-            else if (j == 5)
-            {
-                q5.str_Question = questions[index].str_Question;
-                q5.str_RightAnswer = questions[index].str_RightAnswer;
-                q5.str_WrongAnswer = questions[index].str_WrongAnswer;
-            }
+        Debug.Log("This Works");
 
+        int int_Question_Index = Random.Range(1, 150);
 
+        int[] int_Used_Index = new int[20];
+
+        for (int i = 0; i <= int_Used_Index.Length - 1; i++) {
+
+            if (int_Used_Index[i] != int_Question_Index)
+            {
+                q.str_Question = questions[int_Question_Index].str_Question;
+                q.str_RightAnswer = questions[int_Question_Index].str_RightAnswer;
+                q.str_WrongAnswer = questions[int_Question_Index].str_WrongAnswer;
+                q.int_Points = Random.Range(1, 3);
+                int_Used_Index[i] = int_Question_Index;
+            }
+            else {
+                int_Question_Index = Random.Range(1, 150);
+            }
+        
         }
-
+    
     }
 
 }
