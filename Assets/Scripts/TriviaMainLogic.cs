@@ -24,6 +24,10 @@ public class TriviaMainLogic : MonoBehaviour
     [Header("Slider")]
     [SerializeField] Slider playerSlider;
 
+    [Header("Player")]
+    [SerializeField] Player player1;
+    string currentPlayer;
+
     int int_Points;
     bool bool_moveToNextQuestion = false;
 
@@ -40,13 +44,10 @@ public class TriviaMainLogic : MonoBehaviour
     {
         timerImage.fillAmount = timer.fl_FillFraction;
 
-        //This section keeps looping Sungket, not sure why
-        //SP:The code reaches line 49, performs the method on line 67 then loops back to line 49.
-
         if (timer.bool_LoadNextQuestion)
         {
             bool_Answered_Early = false;
-            GetNextQuestion(); //possibly add an 'if' statement here to control the looping?
+            GetNextQuestion();
             timer.bool_LoadNextQuestion = false;
         }
         else if (!bool_Answered_Early && !timer.bool_IsAnsweringQuestion) {
@@ -59,20 +60,36 @@ public class TriviaMainLogic : MonoBehaviour
     IEnumerator LateStart(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
+        InitalisePlayers(2);
         InitaliseSceneAssets();
       
     }
 
     //Gets the next question, supposed to be used in the void Update part when the next question is loaded
     void GetNextQuestion() {
-        //if(bool_moveToNextQuestion) //if the question is answered wrong, bool is false and if loop is stopped, game stops. When correct answer is selected, looping happens.
-        //{
-            InitaliseSceneAssets(); //looping method
-        //}
+            InitaliseSceneAssets();
+    }
+
+    public void InitalisePlayers(int int_NumberOfPlayers) {
+
+        player1.SetPlayerName("Player 1");
+        player1.AddPoints(0);
+        player1.SetPlayerTurn(true);
+        
     }
 
     //Initalises everything, sets the text for the questions, buttons, points text and sets the slider
     public void InitaliseSceneAssets() {
+
+        if (!player1.GetPlayerTurn())
+        {
+            go_AnswerButtons[0].SetActive(false);
+            go_AnswerButtons[1].SetActive(false);
+        }
+        else {
+            go_AnswerButtons[0].SetActive(true);
+            go_AnswerButtons[1].SetActive(true);
+        }
 
         getQuestion.SetQuestion();
 
@@ -81,10 +98,10 @@ public class TriviaMainLogic : MonoBehaviour
         int_Points = currentQuestion.GetPointValue();
         pointsText.text = "This Question is worth: " + currentQuestion.GetPoints() + " points";
 
-        for (int i = 0; i < go_AnswerButtons.Length; i++)   // <= was causing the loop 
+        for (int i = 0; i < go_AnswerButtons.Length; i++)
         {
 
-            buttonText = go_AnswerButtons[i].GetComponentInChildren<TextMeshProUGUI>(); // after this line, code then goes back to line 71 to loop through again
+            buttonText = go_AnswerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
 
             //Randomly selects which button displays the write answer and which on displays the wrong answer. If even then it shows the right, else it shows the wrong answer
             if (int_AnswerIndex % 2 == 0)
@@ -100,7 +117,7 @@ public class TriviaMainLogic : MonoBehaviour
                 int_AnswerIndex = 2;
             }
 
-        } //loop goes back to InitaliseSceneAssets() from here
+        }
 
     }
 
@@ -108,9 +125,14 @@ public class TriviaMainLogic : MonoBehaviour
     public void AnswerButtonClick(int index) {
 
         bool_Answered_Early = true;
+        player1.SetPlayerTurn(false);
         DisplayResult(index);
         timer.CancelTimer();
 
+    }
+
+    public string GetCurrentPlayer() {
+        return currentPlayer;
     }
 
     //Changes the question text to right or wrong depending on which button was pressed
