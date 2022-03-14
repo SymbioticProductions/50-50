@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.UI;
 using TMPro;
 
 public class ConnectManager : MonoBehaviourPunCallbacks {
@@ -12,6 +13,8 @@ private GameObject ConnectPanel;
 
 [SerializeField]
 private TextMeshProUGUI StatusText;
+
+    //ref player data through Dictionary 
 
 private bool isConnecting = false; //not trying to connect to server until prompted
 private const string gameVersion = "v1";
@@ -81,9 +84,24 @@ private const string gameVersion = "v1";
         public override void OnPlayerEnteredRoom(Player newPlayer) //host takes players to the game scene
     {
         base.OnPlayerEnteredRoom(newPlayer);
+        Debug.Log(PhotonNetwork.CurrentRoom.PlayerCount);
+
         if (PhotonNetwork.CurrentRoom.PlayerCount == 2 && PhotonNetwork.IsMasterClient)
         {
+            /*if (PhotonNetwork.CurrentRoom.PlayerCount == 1) {
+
+                Slider PS1 = GameObject.Find("player1Slider").GetComponent<Slider>();
+                PS1.gameObject.SetActive(true);
+
+            } else if (PhotonNetwork.CurrentRoom.PlayerCount == 2) {
+
+                Slider PS2 = GameObject.Find("player2Slider").GetComponent<Slider>();
+                PS2.gameObject.SetActive(true);
+
+            }*/
             PhotonNetwork.LoadLevel("Game");
+            Debug.Log(GameObject.Find("player1Slider"));
+
         }
     }
 

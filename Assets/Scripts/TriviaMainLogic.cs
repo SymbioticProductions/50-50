@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class TriviaMainLogic : MonoBehaviour
 {
@@ -21,12 +22,9 @@ public class TriviaMainLogic : MonoBehaviour
     [SerializeField] Image timerImage;
     Timer timer;
 
-    [Header("Slider")]
-    [SerializeField] Slider playerSlider;
-
     [Header("Player")]
-    [SerializeField] Player player1;
-    string currentPlayer;
+    [SerializeField] PlayerData player;
+    PhotonView playerView;
 
     int int_Points;
     bool bool_moveToNextQuestion = false;
@@ -35,7 +33,6 @@ public class TriviaMainLogic : MonoBehaviour
     void Start() {
 
         timer = FindObjectOfType<Timer>();
-        playerSlider.value = 0;
         StartCoroutine(LateStart(0.5f));
 
     }
@@ -53,6 +50,12 @@ public class TriviaMainLogic : MonoBehaviour
         else if (!bool_Answered_Early && !timer.bool_IsAnsweringQuestion) {
             DisplayResult(-1);
         }
+
+/*        if (player1Slider.value == 10) {
+            Debug.Log("Player1 has won!");
+            questionText.text = "Player1 Has won!";
+            timer.bool_LoadNextQuestion = false;
+        }*/
     }
 
     //Added this in here as a delay. For some reason the code this code was executing quicker than the ReadCSV code, so the questions weren't coming up
@@ -60,7 +63,7 @@ public class TriviaMainLogic : MonoBehaviour
     IEnumerator LateStart(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
-        InitalisePlayers(2);
+        InitalisePlayers();
         InitaliseSceneAssets();
       
     }
@@ -70,26 +73,15 @@ public class TriviaMainLogic : MonoBehaviour
             InitaliseSceneAssets();
     }
 
-    public void InitalisePlayers(int int_NumberOfPlayers) {
+    public void InitalisePlayers() {
 
-        player1.SetPlayerName("Player 1");
-        player1.AddPoints(0);
-        player1.SetPlayerTurn(true);
+        this.player.AddPoints(0);
+        this.player.SetPlayerTurn(true);
         
     }
 
     //Initalises everything, sets the text for the questions, buttons, points text and sets the slider
     public void InitaliseSceneAssets() {
-
-        if (!player1.GetPlayerTurn())
-        {
-            go_AnswerButtons[0].SetActive(false);
-            go_AnswerButtons[1].SetActive(false);
-        }
-        else {
-            go_AnswerButtons[0].SetActive(true);
-            go_AnswerButtons[1].SetActive(true);
-        }
 
         getQuestion.SetQuestion();
 
@@ -125,14 +117,12 @@ public class TriviaMainLogic : MonoBehaviour
     public void AnswerButtonClick(int index) {
 
         bool_Answered_Early = true;
-        player1.SetPlayerTurn(false);
+        this.player.SetPlayerTurn(false); //get next player and set it to their turn
         DisplayResult(index);
         timer.CancelTimer();
 
-    }
+        //For loop, cycles through to next player in index and sets turn to true.
 
-    public string GetCurrentPlayer() {
-        return currentPlayer;
     }
 
     //Changes the question text to right or wrong depending on which button was pressed
@@ -145,7 +135,7 @@ public class TriviaMainLogic : MonoBehaviour
         if (go_AnswerButtons[index].name.Equals("Correct"))
         {
             questionText.text = "Correct";
-            playerSlider.value = playerSlider.value + int_Points;
+
             Debug.Log("Correct");
             bool_moveToNextQuestion = true;
         }
