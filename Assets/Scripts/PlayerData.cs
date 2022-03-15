@@ -16,7 +16,7 @@ public class PlayerData : MonoBehaviour
 
     public void Start() {
 
-        playerSlider.gameObject.SetActive(true);
+    //    playerSlider.gameObject.SetActive(true);
     
     }
 
