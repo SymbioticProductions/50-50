@@ -17,6 +17,9 @@ private TextMeshProUGUI StatusText;
 [SerializeField]
 private GameObject StartButton;
 
+[SerializeField]
+private GameObject BackButton;
+
     //ref player data through Dictionary 
 
 private bool isConnecting = false; //not trying to connect to server until prompted
@@ -28,20 +31,28 @@ private const string gameVersion = "v1";
     }
     public void Connect()
     {
-        isConnecting = true;
-        ConnectPanel.SetActive(false);
-        ShowStatus("Connecting...");
-
-        if (PhotonNetwork.IsConnected)
-        {
-            ShowStatus("Joining session...");
-            PhotonNetwork.JoinRandomRoom();
+        if (string.IsNullOrEmpty(PhotonNetwork.NickName)){
+        
+            ShowStatus("Please enter your name");
+            isConnecting = false;
         }
         else
-        {
+        {    
+            isConnecting = true;
+            ConnectPanel.SetActive(false);
             ShowStatus("Connecting...");
-            PhotonNetwork.ConnectUsingSettings();
-            PhotonNetwork.GameVersion = gameVersion;
+
+            if (PhotonNetwork.IsConnected)
+            {
+                ShowStatus("Joining session...");
+                PhotonNetwork.JoinRandomRoom();
+            }
+            else
+            {
+                ShowStatus("Connecting...");
+                PhotonNetwork.ConnectUsingSettings();
+                PhotonNetwork.GameVersion = gameVersion;
+            }
         }
     }
 
@@ -87,6 +98,8 @@ private const string gameVersion = "v1";
         isConnecting = false;
         ConnectPanel.SetActive(true);
         StartButton.gameObject.SetActive(false);
+        BackButton.gameObject.SetActive(false);
+        
     }
 
     public override void OnJoinedRoom() 
@@ -94,18 +107,33 @@ private const string gameVersion = "v1";
         ShowStatus("Joined session: "+PhotonNetwork.CurrentRoom.PlayerCount+" player(s) in lobby"); //displays the amount of players in lobby
         
         if(PhotonNetwork.IsMasterClient)        //the start button will only show for the host, as they are the only one to load game
-            StartButton.gameObject.SetActive(true);        
+            StartButton.gameObject.SetActive(true);
+            BackButton.gameObject.SetActive(true);        
     }
-    public void LoadLevel() //have now made the load scene manual, so host can wait for 1-3 more players, or play solo
+
+    public void LoadLevel() // made the load scene manual, so host can wait for 1-3 more players, or play solo
     {
         if(PhotonNetwork.IsMasterClient)
             PhotonNetwork.LoadLevel("Game");
     }
 
-    public override void OnPlayerEnteredRoom(Player newPlayer)
+    public void DisconnectPlayer() //disconnects player from session and returns to start menu
+    {  
+        StartCoroutine(Disconnect());
+    }
+    IEnumerator Disconnect()
     {
-        base.OnPlayerEnteredRoom(newPlayer);
+            PhotonNetwork.Disconnect();  
+            while(PhotonNetwork.IsConnected)
+                yield return null;    
+            PhotonNetwork.LoadLevel("Start");        
+    }
+
+    public override void OnPlayerEnteredRoom(Player otherPlayer)
+    {
+        base.OnPlayerEnteredRoom(otherPlayer);
         Debug.Log(PhotonNetwork.CurrentRoom.PlayerCount);
+        Debug.Log(otherPlayer.NickName+ " has joined the session");        
         ShowStatus("Joined session: "+PhotonNetwork.CurrentRoom.PlayerCount+" player(s) in lobby"); //displays the amount of players in lobby        
         /*if (PhotonNetwork.CurrentRoom.PlayerCount == 2 && PhotonNetwork.IsMasterClient)
         {
@@ -121,8 +149,18 @@ private const string gameVersion = "v1";
 
             }
             Debug.Log(GameObject.Find("player1Slider"));
-*/
-        
+*/    
     }
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        base.OnPlayerLeftRoom(otherPlayer);
+        Debug.Log(PhotonNetwork.CurrentRoom.PlayerCount); 
+        Debug.Log(otherPlayer.NickName+ " has left the session");          
+        ShowStatus("Joined session: "+PhotonNetwork.CurrentRoom.PlayerCount+" player(s) in lobby"); //displays the amount of players in lobby 
 
+        if(PhotonNetwork.IsMasterClient) //allows the new host to start the match if original host leaves
+        {
+            StartButton.SetActive(true);
+        }            
+    }
 }

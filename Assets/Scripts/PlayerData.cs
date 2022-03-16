@@ -21,7 +21,7 @@ public class PlayerData : MonoBehaviour
     }
 
     public void SetPlayerName(string str_InputName)
-    {;
+    {
 
         if (string.IsNullOrEmpty(str_InputName))
         {

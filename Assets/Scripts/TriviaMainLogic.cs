@@ -5,7 +5,7 @@ using TMPro;
 using UnityEngine.UI;
 using Photon.Pun;
 
-public class TriviaMainLogic : MonoBehaviour
+public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
 {
     [Header("Questions")]
     [SerializeField] ReadCSV getQuestion;
@@ -72,6 +72,28 @@ public class TriviaMainLogic : MonoBehaviour
     void GetNextQuestion() {
             InitaliseSceneAssets();
     }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) //I think that delay problem is happening here sunny, as the first question doesn't register
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(this.getQuestion);           
+            stream.SendNext(this.currentQuestion);
+            stream.SendNext(this.questionText.text);
+            stream.SendNext(this.pointsText.text);
+           // stream.SendNext(this.buttonText.text);    //only one of the buttons updates properly, been trying to fix it but no luck
+
+        }
+        else
+        {
+            this.getQuestion = (ReadCSV)stream.ReceiveNext();
+            this.currentQuestion = (QuestionScriptObject)stream.ReceiveNext();
+            this.questionText.text = (string)stream.ReceiveNext();
+            this.pointsText.text = (string)stream.ReceiveNext();
+           //this.buttonText.text = (string)stream.ReceiveNext(); //only copies the string from host, might be why the buttons dont register properly
+            
+        }
+    } //syncs everything on the host's screen with all other clients
 
     public void InitalisePlayers() {
 
