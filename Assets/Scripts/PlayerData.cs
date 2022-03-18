@@ -16,12 +16,12 @@ public class PlayerData : MonoBehaviour
 
     public void Start() {
 
-        playerSlider.gameObject.SetActive(true);
+    //    playerSlider.gameObject.SetActive(true);
     
     }
 
     public void SetPlayerName(string str_InputName)
-    {;
+    {
 
         if (string.IsNullOrEmpty(str_InputName))
         {
