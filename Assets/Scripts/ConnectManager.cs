@@ -135,21 +135,6 @@ private const string gameVersion = "v1";
         Debug.Log(PhotonNetwork.CurrentRoom.PlayerCount);
         Debug.Log(otherPlayer.NickName+ " has joined the session");        
         ShowStatus("Joined session: "+PhotonNetwork.CurrentRoom.PlayerCount+" player(s) in lobby"); //displays the amount of players in lobby        
-        /*if (PhotonNetwork.CurrentRoom.PlayerCount == 2 && PhotonNetwork.IsMasterClient)
-        {
-            if (PhotonNetwork.CurrentRoom.PlayerCount == 1) {
-
-                Slider PS1 = GameObject.Find("player1Slider").GetComponent<Slider>();
-                PS1.gameObject.SetActive(true);
-
-            } else if (PhotonNetwork.CurrentRoom.PlayerCount == 2) {
-
-                Slider PS2 = GameObject.Find("player2Slider").GetComponent<Slider>();
-                PS2.gameObject.SetActive(true);
-
-            }
-            Debug.Log(GameObject.Find("player1Slider"));
-*/    
     }
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {

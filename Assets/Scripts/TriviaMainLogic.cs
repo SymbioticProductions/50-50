@@ -4,8 +4,10 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Photon.Pun;
+using Photon.Realtime;
+using ExitGames.Client.Photon;
 
-public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
+public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEventCallback
 {
     [Header("Questions")]
     [SerializeField] ReadCSV getQuestion;
@@ -23,15 +25,16 @@ public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
     Timer timer;
 
     [Header("Player")]
-    [SerializeField] PlayerData player;
-    PhotonView playerView;
+    [SerializeField] public GameObject player;
+    [SerializeField] GameObject slider1, slider2, slider3, slider4;
 
-    int int_Points;
+    public int int_Points;
     bool bool_moveToNextQuestion = false;
 
     // Start is called before the first frame update
     void Start() {
 
+        InitalisePlayers();
         timer = FindObjectOfType<Timer>();
         StartCoroutine(LateStart(0.5f));
 
@@ -51,11 +54,6 @@ public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
             DisplayResult(-1);
         }
 
-/*        if (player1Slider.value == 10) {
-            Debug.Log("Player1 has won!");
-            questionText.text = "Player1 Has won!";
-            timer.bool_LoadNextQuestion = false;
-        }*/
     }
 
     //Added this in here as a delay. For some reason the code this code was executing quicker than the ReadCSV code, so the questions weren't coming up
@@ -63,7 +61,6 @@ public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
     IEnumerator LateStart(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
-        InitalisePlayers();
         InitaliseSceneAssets();
       
     }
@@ -73,33 +70,37 @@ public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
             InitaliseSceneAssets();
     }
 
-    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) //I think that delay problem is happening here sunny, as the first question doesn't register
-    {
-        if (stream.IsWriting)
-        {
-            stream.SendNext(this.getQuestion);           
-            stream.SendNext(this.currentQuestion);
-            stream.SendNext(this.questionText.text);
-            stream.SendNext(this.pointsText.text);
-           // stream.SendNext(this.buttonText.text);    //only one of the buttons updates properly, been trying to fix it but no luck
-
-        }
-        else
-        {
-            this.getQuestion = (ReadCSV)stream.ReceiveNext();
-            this.currentQuestion = (QuestionScriptObject)stream.ReceiveNext();
-            this.questionText.text = (string)stream.ReceiveNext();
-            this.pointsText.text = (string)stream.ReceiveNext();
-           //this.buttonText.text = (string)stream.ReceiveNext(); //only copies the string from host, might be why the buttons dont register properly
-            
-        }
-    } //syncs everything on the host's screen with all other clients
-
     public void InitalisePlayers() {
 
-        this.player.AddPoints(0);
-        this.player.SetPlayerTurn(true);
-        
+        Vector2 spawnPos = new Vector2(0, 0);
+        PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
+        player.name = PhotonNetwork.NickName;
+        Debug.Log("Player: " + player.name + " has joined!");
+
+        if (PhotonNetwork.CountOfPlayers == 1) {
+
+            slider1.gameObject.SetActive(true);
+
+        } else if (PhotonNetwork.CountOfPlayers == 2) {
+
+            slider1.gameObject.SetActive(true);
+            slider2.gameObject.SetActive(true);
+
+        } else if (PhotonNetwork.CountOfPlayers == 3) {
+
+            slider1.gameObject.SetActive(true);
+            slider2.gameObject.SetActive(true);
+            slider3.gameObject.SetActive(true);
+
+        } else if (PhotonNetwork.CountOfPlayers == 3) {
+
+            slider1.gameObject.SetActive(true);
+            slider2.gameObject.SetActive(true);
+            slider3.gameObject.SetActive(true);
+            slider4.gameObject.SetActive(true);
+
+        }
+
     }
 
     //Initalises everything, sets the text for the questions, buttons, points text and sets the slider
@@ -139,7 +140,6 @@ public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
     public void AnswerButtonClick(int index) {
 
         bool_Answered_Early = true;
-        this.player.SetPlayerTurn(false); //get next player and set it to their turn
         DisplayResult(index);
         timer.CancelTimer();
 
@@ -168,5 +168,32 @@ public class TriviaMainLogic : MonoBehaviourPun, IPunObservable
         }
         
     }
+
+    public void OnEvent(EventData photonEvent)
+    {
+
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) //I think that delay problem is happening here sunny, as the first question doesn't register
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(this.getQuestion);
+            stream.SendNext(this.currentQuestion);
+            stream.SendNext(this.questionText.text);
+            stream.SendNext(this.pointsText.text);
+            stream.SendNext(this.buttonText.text);    //only one of the buttons updates properly, been trying to fix it but no luck
+
+        }
+        else
+        {
+            this.getQuestion = (ReadCSV)stream.ReceiveNext();
+            this.currentQuestion = (QuestionScriptObject)stream.ReceiveNext();
+            this.questionText.text = (string)stream.ReceiveNext();
+            this.pointsText.text = (string)stream.ReceiveNext();
+            this.buttonText.text = (string)stream.ReceiveNext(); //only copies the string from host, might be why the buttons dont register properly
+
+        }
+    } //syncs everything on the host's screen with all other clients
 
 }

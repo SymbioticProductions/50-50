@@ -1083,8 +1083,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9856ae69be6ec814a82944907f52772e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerPrefab: {fileID: 210396718848202883, guid: 59a2f0c072d29c74eaf6a9bbaa9bc589, type: 3}
-  playerSlider: {fileID: 0}
   str_PlayerName: 
   int_PlayerScore: 0
   bool_IsPlayerTurn: 0

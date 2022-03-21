@@ -6,19 +6,11 @@ using UnityEngine.UI;
 
 public class PlayerData : MonoBehaviour
 {
-    [SerializeField] public GameObject playerPrefab;
-    [SerializeField] Slider playerSlider;
 
     public string str_PlayerName;
     public int int_PlayerScore;
     int int_NumberOfPlayers = 0;
     public bool bool_IsPlayerTurn;
-
-    public void Start() {
-
-    //    playerSlider.gameObject.SetActive(true);
-    
-    }
 
     public void SetPlayerName(string str_InputName)
     {
