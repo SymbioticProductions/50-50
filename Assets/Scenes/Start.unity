@@ -314,8 +314,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -1}
+  m_SizeDelta: {x: 0, y: 2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &276707220
 MonoBehaviour:
@@ -340,7 +340,7 @@ MonoBehaviour:
   m_text: Disconnect
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 5d56ebab31c5548c0b9fd419830a1fc5, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -2237662714482858554, guid: 5d56ebab31c5548c0b9fd419830a1fc5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1083,9 +1083,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9856ae69be6ec814a82944907f52772e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  str_PlayerName: 
   int_PlayerScore: 0
-  bool_IsPlayerTurn: 0
 --- !u!1 &871098285
 GameObject:
   m_ObjectHideFlags: 0
@@ -1595,10 +1593,10 @@ RectTransform:
   m_Father: {fileID: 1532619584}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -377.85602, y: -181.056}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -2}
+  m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1447479273
 MonoBehaviour:

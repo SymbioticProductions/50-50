@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
-public class Timer : MonoBehaviour
+public class Timer : MonoBehaviourPun
 {
 
     [SerializeField] float fl_TimeToCompleteQuestion = 10f;
@@ -12,15 +13,14 @@ public class Timer : MonoBehaviour
     public float fl_FillFraction;
 
     public bool bool_IsAnsweringQuestion = true;
-    float fl_TimerValue;
-
+    public float fl_TimerValue;
 
     // Update is called once per frame
     void Update()
     {
         UpdateTimer();
     }
-
+    [PunRPC]
     public void CancelTimer() {
         fl_TimerValue = 0;
     }

@@ -22,36 +22,60 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
     [Header("Timer")]
     [SerializeField] Image timerImage;
-    Timer timer;
+    [PunRPC] Timer timer;
 
     [Header("Player")]
     [SerializeField] public GameObject player;
     [SerializeField] GameObject slider1, slider2, slider3, slider4;
 
+    public PhotonView PV2;
+    public PhotonView PV1;
+
+    public const byte EVENT_TIMER = 1;
+    public const byte EVENT_TURN = 2;
+    public const byte EVENT_DISPLAY = 3;
+
+
     public int int_Points;
     bool bool_moveToNextQuestion = false;
+    public bool isPlayerTurn;
+
+    private int PlayerNumber = PhotonNetwork.LocalPlayer.ActorNumber;
 
     // Start is called before the first frame update
-    void Start() {
+    void Start()
+    {
+        PV2 = GameObject.Find("GameManager").GetComponent<PhotonView>();
+        PV1 = GameObject.Find("TimerManager").GetComponent<PhotonView>();
 
-        InitalisePlayers();
-        timer = FindObjectOfType<Timer>();
-        StartCoroutine(LateStart(0.5f));
+        if (PV2.IsMine)
+        {
+            PV2.RPC("InitalisePlayers", RpcTarget.All);
+            //PV2.RPC("StarterTurn", RpcTarget.All);
+
+        }
+            timer = FindObjectOfType<Timer>();
+            StartCoroutine(LateStart(0.5f));
 
     }
 
     void Update()
     {
         timerImage.fillAmount = timer.fl_FillFraction;
-
-        if (timer.bool_LoadNextQuestion)
+        if (PV2.IsMine)
         {
-            bool_Answered_Early = false;
-            GetNextQuestion();
-            timer.bool_LoadNextQuestion = false;
-        }
-        else if (!bool_Answered_Early && !timer.bool_IsAnsweringQuestion) {
-            DisplayResult(-1);
+            if (timer.bool_LoadNextQuestion)
+            {
+                bool_Answered_Early = false;
+
+                PV2.RPC("GetNextQuestion", RpcTarget.All);
+
+                timer.bool_LoadNextQuestion = false;
+            }
+            else if (!bool_Answered_Early && !timer.bool_IsAnsweringQuestion)
+            {
+                PV2.RPC("DisplayResult", RpcTarget.All,-1);
+            }        
         }
 
     }
@@ -61,38 +85,53 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     IEnumerator LateStart(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
-        InitaliseSceneAssets();
-      
+        if (PV2.IsMine)
+        {
+            PV2.RPC("InitaliseSceneAssets", RpcTarget.All);
+        }
+
+
     }
 
     //Gets the next question, supposed to be used in the void Update part when the next question is loaded
-    void GetNextQuestion() {
-            InitaliseSceneAssets();
+    [PunRPC]
+    void GetNextQuestion()
+    {
+        InitaliseSceneAssets();
     }
 
-    public void InitalisePlayers() {
+    [PunRPC]
+    void InitalisePlayers()
+    {
 
         Vector2 spawnPos = new Vector2(0, 0);
         PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
         player.name = PhotonNetwork.NickName;
         Debug.Log("Player: " + player.name + " has joined!");
 
-        if (PhotonNetwork.CountOfPlayers == 1) {
+        if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
+        {
 
             slider1.gameObject.SetActive(true);
 
-        } else if (PhotonNetwork.CountOfPlayers == 2) {
+        }
+        else if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
+        {
 
             slider1.gameObject.SetActive(true);
             slider2.gameObject.SetActive(true);
 
-        } else if (PhotonNetwork.CountOfPlayers == 3) {
+        }
+        else if (PhotonNetwork.CurrentRoom.PlayerCount == 3)
+        {
 
             slider1.gameObject.SetActive(true);
             slider2.gameObject.SetActive(true);
             slider3.gameObject.SetActive(true);
 
-        } else if (PhotonNetwork.CountOfPlayers == 3) {
+        }
+        else if (PhotonNetwork.CurrentRoom.PlayerCount == 4)
+        {
 
             slider1.gameObject.SetActive(true);
             slider2.gameObject.SetActive(true);
@@ -104,7 +143,9 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     }
 
     //Initalises everything, sets the text for the questions, buttons, points text and sets the slider
-    public void InitaliseSceneAssets() {
+    [PunRPC]
+    void InitaliseSceneAssets()
+    {
 
         getQuestion.SetQuestion();
 
@@ -137,19 +178,44 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     }
 
     //This is assigned to the buttons, says that if either answer button is clicked, it displays cancels the timer and displays the result
-    public void AnswerButtonClick(int index) {
+    public void AnswerButtonClick(int index)
+    {
+        //CheckTurn();
+        if (PV1.IsMine)
+        {
+            PV1.RPC("CancelTimer", RpcTarget.All);
 
-        bool_Answered_Early = true;
-        DisplayResult(index);
-        timer.CancelTimer();
+            if (questionText.text == "Correct" || questionText.text == "Wrong")
+            {
+                PV2.RPC("IncrementTurn", RpcTarget.All);//For loop, cycles through to next player in index and sets turn to true.
+            }
 
-        //For loop, cycles through to next player in index and sets turn to true.
+            bool_Answered_Early = true;
+            PV2.RPC("DisplayResult", RpcTarget.All, index);
+            
 
+        }
+        else
+        {
+            float[] reset = new float[] { 0 };
+            float[] turn = new float[] { 1 };
+            int[] display = new int[] {index}; 
+
+            PhotonNetwork.RaiseEvent(EVENT_TIMER, reset, RaiseEventOptions.Default, SendOptions.SendReliable);
+
+            if (questionText.text == "Correct" || questionText.text == "Wrong")
+            {
+                PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
+            }
+            PhotonNetwork.RaiseEvent(EVENT_DISPLAY, display, RaiseEventOptions.Default, SendOptions.SendReliable);
+        }            
     }
 
     //Changes the question text to right or wrong depending on which button was pressed
-    public void DisplayResult(int index) {
-        if(index < 0)
+    [PunRPC]
+    public void DisplayResult(int index)
+    {
+        if (index < 0)
         {
             return;
         }
@@ -166,15 +232,57 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             questionText.text = "Wrong";
             Debug.Log("Wrong");
         }
-        
-    }
 
-    public void OnEvent(EventData photonEvent)
+    }
+    public void OnEvent(EventData photonEvent) //what the host does upon receiving request from client 
     {
+        if(PV2.IsMine && PV1.IsMine)
+        {
+            switch (photonEvent.Code)
+            {
+                case EVENT_TIMER:
+                    float[] reset = (float[])photonEvent.CustomData;
+                    timer.fl_TimerValue = reset[0];
 
+                    break;
+
+                case EVENT_TURN:
+                    float[] turn = (float[])photonEvent.CustomData;
+                    float t1 = turn[0];
+
+                    if(turnNumber != PhotonNetwork.CurrentRoom.PlayerCount)
+                    {
+                        turnNumber += t1;
+                    }
+                    else
+                    {
+                        turnNumber = 1;
+                    }
+                    Debug.Log("Player " + turnNumber + "'s turn");
+
+                    break;
+
+               case EVENT_DISPLAY:
+                    int[] display = (int[])photonEvent.CustomData;
+                    int ind = display[0];
+
+                        DisplayResult(ind);
+
+                    break;
+            }
+        }
+    }
+    public override void OnEnable()
+    {
+        PhotonNetwork.AddCallbackTarget(this);
     }
 
-    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) //I think that delay problem is happening here sunny, as the first question doesn't register
+    public override void OnDisable()
+    {
+        PhotonNetwork.RemoveCallbackTarget(this);
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info) //syncs everything on the host's screen with all other clients
     {
         if (stream.IsWriting)
         {
@@ -182,8 +290,17 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             stream.SendNext(this.currentQuestion);
             stream.SendNext(this.questionText.text);
             stream.SendNext(this.pointsText.text);
-            stream.SendNext(this.buttonText.text);    //only one of the buttons updates properly, been trying to fix it but no luck
 
+            for (int i = 0; i < go_AnswerButtons.Length; i++)
+            {
+                stream.SendNext(go_AnswerButtons[i]);
+                //stream.SendNext(buttonText.text);
+            }
+
+            stream.SendNext(this.slider1);
+            stream.SendNext(this.slider2);
+            stream.SendNext(this.slider3);
+            stream.SendNext(this.slider4);
         }
         else
         {
@@ -191,9 +308,69 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             this.currentQuestion = (QuestionScriptObject)stream.ReceiveNext();
             this.questionText.text = (string)stream.ReceiveNext();
             this.pointsText.text = (string)stream.ReceiveNext();
-            this.buttonText.text = (string)stream.ReceiveNext(); //only copies the string from host, might be why the buttons dont register properly
+
+            for (int i = 0; i < go_AnswerButtons.Length; i++)
+            {
+                go_AnswerButtons[i] = (GameObject)stream.ReceiveNext();
+                //buttonText.text = (string)stream.ReceiveNext();
+            }
+
+            this.slider1 = (GameObject)stream.ReceiveNext();
+            this.slider2 = (GameObject)stream.ReceiveNext();
+            this.slider3 = (GameObject)stream.ReceiveNext();
+            this.slider4 = (GameObject)stream.ReceiveNext();
+        }
+    }
+    public float turnNumber = 1;
+
+    [PunRPC]
+    public void IncrementTurn()
+    {
+        if (turnNumber == PhotonNetwork.CurrentRoom.PlayerCount)
+        {
+            turnNumber = 1;
+        }
+        else
+        {
+            turnNumber++;
+        }
+        Debug.Log("Player " + turnNumber + "'s turn");
+    }
+    
+    void GetNextTurn()
+    {
+        IncrementTurn();
+        //CheckTurn();
+
+    }
+
+    void StarterTurn()
+    {
+        if(PlayerNumber != turnNumber)
+        {
+            isPlayerTurn = false;
+            go_AnswerButtons[0].SetActive(false);
+            go_AnswerButtons[1].SetActive(false);
 
         }
-    } //syncs everything on the host's screen with all other clients
+    }
+
+    public void CheckTurn()
+    {
+        if (PlayerNumber == turnNumber)
+        {
+            isPlayerTurn = true;
+            go_AnswerButtons[0].SetActive(true);
+            go_AnswerButtons[1].SetActive(true);
+
+        }
+        else
+        {
+            isPlayerTurn = false;
+            go_AnswerButtons[0].SetActive(false);
+            go_AnswerButtons[1].SetActive(false);
+
+        }
+    }
 
 }

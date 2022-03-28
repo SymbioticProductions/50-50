@@ -4,7 +4,7 @@ using UnityEngine;
 using Photon.Pun;
 using UnityEngine.UI;
 
-public class PlayerData : MonoBehaviour
+public class PlayerData : MonoBehaviourPunCallbacks
 {
 
     public string str_PlayerName;
@@ -22,7 +22,6 @@ public class PlayerData : MonoBehaviour
         }
         PhotonNetwork.NickName = str_InputName;
     }
-
     public void AddPoints(int int_Points)
     {
 
@@ -44,11 +43,6 @@ public class PlayerData : MonoBehaviour
     public int ReturnScore()
     {
         return int_PlayerScore;
-    }
-
-    public string ReturnName()
-    {
-        return str_PlayerName;
     }
 
 }
