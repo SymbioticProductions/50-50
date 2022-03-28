@@ -21,8 +21,10 @@ public class Timer : MonoBehaviourPun
         UpdateTimer();
     }
     [PunRPC]
-    public void CancelTimer() {
-        fl_TimerValue = 0;
+    public void CancelTimer(int value) {
+
+        value = 0;
+        fl_TimerValue = value;
     }
 
     void UpdateTimer() {

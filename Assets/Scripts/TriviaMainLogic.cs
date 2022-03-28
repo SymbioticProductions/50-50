@@ -35,7 +35,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     public const byte EVENT_TURN = 2;
     public const byte EVENT_DISPLAY = 3;
 
-
+    public int turnNumber = 1;
     public int int_Points;
     bool bool_moveToNextQuestion = false;
     public bool isPlayerTurn;
@@ -180,14 +180,14 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     //This is assigned to the buttons, says that if either answer button is clicked, it displays cancels the timer and displays the result
     public void AnswerButtonClick(int index)
     {
-        //CheckTurn();
-        if (PV1.IsMine)
+        //CheckTurn(); //need this to occur locally when turnnumber changes
+        if (PV1.IsMine)  // if the player is host, calls for all clients
         {
-            PV1.RPC("CancelTimer", RpcTarget.All);
+            PV1.RPC("CancelTimer", RpcTarget.All, 0);
 
             if (questionText.text == "Correct" || questionText.text == "Wrong")
             {
-                PV2.RPC("IncrementTurn", RpcTarget.All);//For loop, cycles through to next player in index and sets turn to true.
+                PV2.RPC("IncrementTurn", RpcTarget.All, 1);//For loop, cycles through to next player in index and sets turn to true.
             }
 
             bool_Answered_Early = true;
@@ -195,10 +195,10 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             
 
         }
-        else
+        else //if the player is a client, requests host to do methods
         {
-            float[] reset = new float[] { 0 };
-            float[] turn = new float[] { 1 };
+            int[] reset = new int[] { 0 };
+            int[] turn = new int[] { 1 };
             int[] display = new int[] {index}; 
 
             PhotonNetwork.RaiseEvent(EVENT_TIMER, reset, RaiseEventOptions.Default, SendOptions.SendReliable);
@@ -241,24 +241,17 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             switch (photonEvent.Code)
             {
                 case EVENT_TIMER:
-                    float[] reset = (float[])photonEvent.CustomData;
-                    timer.fl_TimerValue = reset[0];
+                    int[] reset = (int[])photonEvent.CustomData;
 
+                    //timer.CancelTimer(reset[0]);
+                    PV1.RPC("CancelTimer", RpcTarget.All, reset[0]);
+                    bool_Answered_Early = true;
                     break;
 
                 case EVENT_TURN:
-                    float[] turn = (float[])photonEvent.CustomData;
-                    float t1 = turn[0];
+                    int[] turn = (int[])photonEvent.CustomData;
 
-                    if(turnNumber != PhotonNetwork.CurrentRoom.PlayerCount)
-                    {
-                        turnNumber += t1;
-                    }
-                    else
-                    {
-                        turnNumber = 1;
-                    }
-                    Debug.Log("Player " + turnNumber + "'s turn");
+                    PV2.RPC("IncrementTurn", RpcTarget.All, turn[0]);
 
                     break;
 
@@ -293,7 +286,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
             for (int i = 0; i < go_AnswerButtons.Length; i++)
             {
-                stream.SendNext(go_AnswerButtons[i]);
+                stream.SendNext(go_AnswerButtons[i]); //this here isn't set to the correct object for the button i believe
                 //stream.SendNext(buttonText.text);
             }
 
@@ -311,7 +304,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
             for (int i = 0; i < go_AnswerButtons.Length; i++)
             {
-                go_AnswerButtons[i] = (GameObject)stream.ReceiveNext();
+                go_AnswerButtons[i] = (GameObject)stream.ReceiveNext(); //this here isn't set to the correct object for the button i believe
                 //buttonText.text = (string)stream.ReceiveNext();
             }
 
@@ -321,30 +314,30 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             this.slider4 = (GameObject)stream.ReceiveNext();
         }
     }
-    public float turnNumber = 1;
+    
 
     [PunRPC]
-    public void IncrementTurn()
+    public void IncrementTurn(int next) //receives the next turnnumber
     {
+        next = 1;
         if (turnNumber == PhotonNetwork.CurrentRoom.PlayerCount)
         {
-            turnNumber = 1;
+            turnNumber = next;
         }
         else
         {
-            turnNumber++;
+            turnNumber += next;
         }
         Debug.Log("Player " + turnNumber + "'s turn");
     }
     
-    void GetNextTurn()
-    {
-        IncrementTurn();
+    //void GetNextTurn()
+    //{
+        //IncrementTurn(1);
         //CheckTurn();
+    //}
 
-    }
-
-    void StarterTurn()
+    void StarterTurn() //disables all clients answer buttons for the first turn
     {
         if(PlayerNumber != turnNumber)
         {
@@ -355,7 +348,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         }
     }
 
-    public void CheckTurn()
+    public void CheckTurn() //disables the answer buttons if its not the player's turn (not working properly)
     {
         if (PlayerNumber == turnNumber)
         {
@@ -372,5 +365,4 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
         }
     }
-
 }
