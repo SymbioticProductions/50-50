@@ -48,8 +48,12 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     // Start is called before the first frame update
     void Start()
     {
+        StartCoroutine(LateStart(1.75f));
+        timer = FindObjectOfType<Timer>();
         PV2 = GameObject.Find("GameManager").GetComponent<PhotonView>();
         PV1 = GameObject.Find("TimerManager").GetComponent<PhotonView>();
+        ToggleButtons(0);
+        questionText.text = "Initalising...";
 
         if (PV2.IsMine)
         {
@@ -57,9 +61,6 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             //PV2.RPC("StarterTurn", RpcTarget.All);
 
         }
-            timer = FindObjectOfType<Timer>();
-            StartCoroutine(LateStart(0.5f));
-
     }
 
     void Update()
@@ -88,11 +89,11 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     IEnumerator LateStart(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
+
         if (PV2.IsMine)
         {
             PV2.RPC("InitaliseSceneAssets", RpcTarget.All);
         }
-
 
     }
 
@@ -100,6 +101,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     [PunRPC]
     void GetNextQuestion()
     {
+        CheckTurn();
         InitaliseSceneAssets();
     }
 
@@ -111,13 +113,13 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
         player.str_PlayerName = PhotonNetwork.NickName;
         Debug.Log("Player: " + player.str_PlayerName + " has joined!");
-        Debug.Log("PlayerNUmber = " + PlayerNumber);
+        Debug.Log("PlayerNumber = " + PlayerNumber);
 
         if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
         {
 
             slider1.gameObject.SetActive(true);
-
+           
         }
         else if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
         {
@@ -150,11 +152,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     [PunRPC]
     void InitaliseSceneAssets()
     {
-
-        CheckTurn();
-
         getQuestion.SetQuestion();
-
         int int_AnswerIndex = Random.Range(1, 10);
         questionText.text = currentQuestion.GetQuestion();
         int_Points = currentQuestion.GetPointValue();
@@ -198,22 +196,20 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         if (PV1.IsMine)  // if the player is host, calls for all clients
         {
             PV1.RPC("CancelTimer", RpcTarget.All, 0);
-
-            if (questionText.text == "Correct" || questionText.text == "Wrong")
+            
+            if (go_AnswerButtons[index].name.Equals("Correct") || go_AnswerButtons[index].name.Equals("Wrong"))
             {
+                if (go_AnswerButtons[index].name.Equals("Correct"))
+                {
+
+                    PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
+
+                }
                 PV2.RPC("IncrementTurn", RpcTarget.All, 1);//For loop, cycles through to next player in index and sets turn to true.
-            }
-
-            if (questionText.text == "Correct")
-            {
-
-                PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
-
             }
 
             bool_Answered_Early = true;
             PV2.RPC("DisplayResult", RpcTarget.All, index);
-            
 
         }
         else //if the player is a client, requests host to do methods
@@ -224,18 +220,22 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             int[] slider = new int[] {int_Points};
 
             PhotonNetwork.RaiseEvent(EVENT_TIMER, reset, RaiseEventOptions.Default, SendOptions.SendReliable);
+            PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
 
-            if (questionText.text == "Correct" || questionText.text == "Wrong")
+            if (go_AnswerButtons[index].name.Equals("Correct") || go_AnswerButtons[index].name.Equals("Wrong"))
             {
-                PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
+                               
+                if (go_AnswerButtons[index].name.Equals("Correct"))
+                {
+
+                    PhotonNetwork.RaiseEvent(EVENT_SLIDER, slider, RaiseEventOptions.Default, SendOptions.SendReliable);
+
+                }
+                
             }
+
             PhotonNetwork.RaiseEvent(EVENT_DISPLAY, display, RaiseEventOptions.Default, SendOptions.SendReliable);
 
-            if (questionText.text == "Correct") {
-
-                PhotonNetwork.RaiseEvent(EVENT_SLIDER, slider, RaiseEventOptions.Default, SendOptions.SendReliable);
-
-            }
         }
 
     }
@@ -248,18 +248,18 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         {
             return;
         }
-        Debug.Log("Index:" + index);
+        Debug.Log("Result Index:" + index);
+        ToggleButtons(0);
         if (go_AnswerButtons[index].name.Equals("Correct"))
         {
             questionText.text = "Correct";
-
-            Debug.Log("Correct");
+            Debug.Log("Answer is Correct");
             bool_moveToNextQuestion = true;
         }
         else
         {
             questionText.text = "Wrong";
-            Debug.Log("Wrong");
+            Debug.Log("Answer is Wrong");
         }
 
     }
@@ -317,7 +317,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
                 case EVENT_SLIDER:
                     int[] slider = (int[])photonEvent.CustomData;
 
-                    PV2.RPC("SliderEvent", RpcTarget.All);
+                    PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
 
                     break;
             }
@@ -390,8 +390,6 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
                 }
                 
-                
-
             }
 
             this.slider1 = (Slider)stream.ReceiveNext();
@@ -421,40 +419,54 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         }
         Debug.Log("Player " + turnNumber + "'s turn");
     }
-    
-    //void GetNextTurn()
-    //{
-        //IncrementTurn(1);
-        //CheckTurn();
-    //}
+
+    public void ToggleButtons(int index) {
+
+        if (index == 0)
+        {
+
+            go_AnswerButtons[0].SetActive(false);
+            go_AnswerButtons[1].SetActive(false);
+
+        }
+        else {
+
+            go_AnswerButtons[0].SetActive(true);
+            go_AnswerButtons[1].SetActive(true);
+
+        }
+        
+    }
 
     void StarterTurn() //disables all clients answer buttons for the first turn
     {
         if(PlayerNumber != turnNumber)
         {
             isPlayerTurn = false;
-            go_AnswerButtons[0].SetActive(false);
-            go_AnswerButtons[1].SetActive(false);
+            ToggleButtons(0);
 
         }
     }
 
     public void CheckTurn() //disables the answer buttons if its not the player's turn (not working properly)
     {
+
+        Debug.Log("Check turn run");
+        Debug.Log("PlayerNumber = " + PlayerNumber);
+        Debug.Log("TurnNumber = " + turnNumber);
+
         if (PlayerNumber == turnNumber)
         {
 
             isPlayerTurn = true;
-            go_AnswerButtons[0].SetActive(true);
-            go_AnswerButtons[1].SetActive(true);
+            ToggleButtons(1);
 
         }
         else
         {
 
             isPlayerTurn = false;
-            go_AnswerButtons[0].SetActive(false);
-            go_AnswerButtons[1].SetActive(false);
+            ToggleButtons(0);
 
         }
     }

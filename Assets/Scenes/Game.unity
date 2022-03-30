@@ -2272,7 +2272,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fl_TimeToCompleteQuestion: 10
-  fl_TimeToShowCorrectAnswer: 10
+  fl_TimeToShowCorrectAnswer: 1.75
   bool_LoadNextQuestion: 0
   fl_FillFraction: 0
   bool_IsAnsweringQuestion: 1

@@ -46,6 +46,8 @@ MonoBehaviour:
   - InitalisePlayers
   - InitaliseSceneAssets
   - SliderEvent
+  - AnswerButtonClick
+  - ToggleButtons
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
