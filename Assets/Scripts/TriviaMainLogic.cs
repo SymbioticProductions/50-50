@@ -25,7 +25,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     [PunRPC] Timer timer;
 
     [Header("Player")]
-    [SerializeField] public GameObject player;
+    [SerializeField] public PlayerData player;
     [SerializeField] GameObject slider1, slider2, slider3, slider4;
 
     public PhotonView PV2;
@@ -106,8 +106,8 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
         Vector2 spawnPos = new Vector2(0, 0);
         PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
-        player.name = PhotonNetwork.NickName;
-        Debug.Log("Player: " + player.name + " has joined!");
+        player.str_PlayerName = PhotonNetwork.NickName;
+        Debug.Log("Player: " + player.str_PlayerName + " has joined!");
 
         if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
         {

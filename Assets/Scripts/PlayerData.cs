@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class PlayerData : MonoBehaviourPunCallbacks
 {
 
-    public string str_PlayerName;
+    public string str_PlayerName = "Default_PlayerName";
     public int int_PlayerScore;
     int int_NumberOfPlayers = 0;
     public bool bool_IsPlayerTurn;
