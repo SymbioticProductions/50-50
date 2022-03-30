@@ -26,7 +26,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
     [Header("Player")]
     [SerializeField] public PlayerData player;
-    [SerializeField] GameObject slider1, slider2, slider3, slider4;
+    [SerializeField] Slider slider1, slider2, slider3, slider4;
 
     public PhotonView PV2;
     public PhotonView PV1;
@@ -34,11 +34,14 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     public const byte EVENT_TIMER = 1;
     public const byte EVENT_TURN = 2;
     public const byte EVENT_DISPLAY = 3;
+    public const byte EVENT_SLIDER = 4;
 
     public int turnNumber = 1;
     public int int_Points;
     bool bool_moveToNextQuestion = false;
     public bool isPlayerTurn;
+
+    public string button1Text, button2Text;
 
     private int PlayerNumber = PhotonNetwork.LocalPlayer.ActorNumber;
 
@@ -108,6 +111,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
         player.str_PlayerName = PhotonNetwork.NickName;
         Debug.Log("Player: " + player.str_PlayerName + " has joined!");
+        Debug.Log("PlayerNUmber = " + PlayerNumber);
 
         if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
         {
@@ -147,6 +151,8 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     void InitaliseSceneAssets()
     {
 
+        CheckTurn();
+
         getQuestion.SetQuestion();
 
         int int_AnswerIndex = Random.Range(1, 10);
@@ -173,6 +179,14 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
                 int_AnswerIndex = 2;
             }
 
+            if (i == 0)
+            {
+                button1Text = buttonText.text;
+            }
+            else {
+                button2Text = buttonText.text;
+            }
+
         }
 
     }
@@ -180,7 +194,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     //This is assigned to the buttons, says that if either answer button is clicked, it displays cancels the timer and displays the result
     public void AnswerButtonClick(int index)
     {
-        //CheckTurn(); //need this to occur locally when turnnumber changes
+        
         if (PV1.IsMine)  // if the player is host, calls for all clients
         {
             PV1.RPC("CancelTimer", RpcTarget.All, 0);
@@ -188,6 +202,13 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             if (questionText.text == "Correct" || questionText.text == "Wrong")
             {
                 PV2.RPC("IncrementTurn", RpcTarget.All, 1);//For loop, cycles through to next player in index and sets turn to true.
+            }
+
+            if (questionText.text == "Correct")
+            {
+
+                PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
+
             }
 
             bool_Answered_Early = true;
@@ -199,7 +220,8 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         {
             int[] reset = new int[] { 0 };
             int[] turn = new int[] { 1 };
-            int[] display = new int[] {index}; 
+            int[] display = new int[] {index};
+            int[] slider = new int[] {int_Points};
 
             PhotonNetwork.RaiseEvent(EVENT_TIMER, reset, RaiseEventOptions.Default, SendOptions.SendReliable);
 
@@ -208,7 +230,14 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
                 PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
             }
             PhotonNetwork.RaiseEvent(EVENT_DISPLAY, display, RaiseEventOptions.Default, SendOptions.SendReliable);
-        }            
+
+            if (questionText.text == "Correct") {
+
+                PhotonNetwork.RaiseEvent(EVENT_SLIDER, slider, RaiseEventOptions.Default, SendOptions.SendReliable);
+
+            }
+        }
+
     }
 
     //Changes the question text to right or wrong depending on which button was pressed
@@ -234,6 +263,28 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         }
 
     }
+
+    [PunRPC]
+    public void SliderEvent(int index) {
+
+        if (PlayerNumber == 1)
+        {
+            slider1.value = slider1.value + index;
+        }
+        else if (PlayerNumber == 2)
+        {
+            slider2.value = slider2.value + index;
+        }
+        else if (PlayerNumber == 3)
+        {
+            slider3.value = slider3.value + index;
+        }
+        else {
+            slider4.value = slider4.value + index;
+        }
+
+    }
+
     public void OnEvent(EventData photonEvent) //what the host does upon receiving request from client 
     {
         if(PV2.IsMine && PV1.IsMine)
@@ -262,6 +313,13 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
                         DisplayResult(ind);
 
                     break;
+
+                case EVENT_SLIDER:
+                    int[] slider = (int[])photonEvent.CustomData;
+
+                    PV2.RPC("SliderEvent", RpcTarget.All);
+
+                    break;
             }
         }
     }
@@ -286,14 +344,25 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
             for (int i = 0; i < go_AnswerButtons.Length; i++)
             {
-                stream.SendNext(go_AnswerButtons[i]); //this here isn't set to the correct object for the button i believe
-                //stream.SendNext(buttonText.text);
+
+                if (i == 0)
+                {
+                    stream.SendNext(this.button1Text);
+                }
+                else {
+                    stream.SendNext(this.button2Text);
+                }
+
             }
 
             stream.SendNext(this.slider1);
+            stream.SendNext(this.slider1.value);
             stream.SendNext(this.slider2);
+            stream.SendNext(this.slider2.value);
             stream.SendNext(this.slider3);
+            stream.SendNext(this.slider3.value);
             stream.SendNext(this.slider4);
+            stream.SendNext(this.slider4.value);
         }
         else
         {
@@ -301,17 +370,38 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             this.currentQuestion = (QuestionScriptObject)stream.ReceiveNext();
             this.questionText.text = (string)stream.ReceiveNext();
             this.pointsText.text = (string)stream.ReceiveNext();
+            this.button1Text = (string)stream.ReceiveNext();
+            this.button2Text = (string)stream.ReceiveNext();
 
             for (int i = 0; i < go_AnswerButtons.Length; i++)
             {
-                go_AnswerButtons[i] = (GameObject)stream.ReceiveNext(); //this here isn't set to the correct object for the button i believe
-                //buttonText.text = (string)stream.ReceiveNext();
+
+                buttonText = go_AnswerButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+
+                if (i == 0)
+                {
+
+                    this.buttonText.text = button1Text;
+
+                }
+                else {
+
+                    this.buttonText.text = button2Text;
+
+                }
+                
+                
+
             }
 
-            this.slider1 = (GameObject)stream.ReceiveNext();
-            this.slider2 = (GameObject)stream.ReceiveNext();
-            this.slider3 = (GameObject)stream.ReceiveNext();
-            this.slider4 = (GameObject)stream.ReceiveNext();
+            this.slider1 = (Slider)stream.ReceiveNext();
+            this.slider1.value = (float)stream.ReceiveNext();
+            this.slider2 = (Slider)stream.ReceiveNext();
+            this.slider2.value = (float)stream.ReceiveNext();
+            this.slider3 = (Slider)stream.ReceiveNext();
+            this.slider3.value = (float)stream.ReceiveNext();
+            this.slider4 = (Slider)stream.ReceiveNext();
+            this.slider4.value = (float)stream.ReceiveNext();
         }
     }
     
@@ -327,6 +417,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         else
         {
             turnNumber += next;
+            Debug.Log("turnNumber = " + turnNumber);
         }
         Debug.Log("Player " + turnNumber + "'s turn");
     }
@@ -352,6 +443,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     {
         if (PlayerNumber == turnNumber)
         {
+
             isPlayerTurn = true;
             go_AnswerButtons[0].SetActive(true);
             go_AnswerButtons[1].SetActive(true);
@@ -359,6 +451,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         }
         else
         {
+
             isPlayerTurn = false;
             go_AnswerButtons[0].SetActive(false);
             go_AnswerButtons[1].SetActive(false);
