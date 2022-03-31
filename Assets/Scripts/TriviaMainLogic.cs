@@ -7,6 +7,8 @@ using Photon.Pun;
 using Photon.Realtime;
 using ExitGames.Client.Photon;
 
+/*Issue with syncing hosts bar, also issue when leaving the timer to run out it is not incrementing the turn value, needs to trigger that*/
+
 public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEventCallback
 {
     [Header("Questions")]
@@ -196,20 +198,10 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         if (PV1.IsMine)  // if the player is host, calls for all clients
         {
             PV1.RPC("CancelTimer", RpcTarget.All, 0);
-            
-            if (go_AnswerButtons[index].name.Equals("Correct") || go_AnswerButtons[index].name.Equals("Wrong"))
-            {
-                if (go_AnswerButtons[index].name.Equals("Correct"))
-                {
-
-                    PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
-
-                }
-                PV2.RPC("IncrementTurn", RpcTarget.All, 1);//For loop, cycles through to next player in index and sets turn to true.
-            }
-
+            ToggleButtons(0);
             bool_Answered_Early = true;
             PV2.RPC("DisplayResult", RpcTarget.All, index);
+            PV2.RPC("IncrementTurn", RpcTarget.All, 1);//For loop, cycles through to next player in index and sets turn to true.
 
         }
         else //if the player is a client, requests host to do methods
@@ -217,24 +209,11 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             int[] reset = new int[] { 0 };
             int[] turn = new int[] { 1 };
             int[] display = new int[] {index};
-            int[] slider = new int[] {int_Points};
-
+            
             PhotonNetwork.RaiseEvent(EVENT_TIMER, reset, RaiseEventOptions.Default, SendOptions.SendReliable);
-            PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
-
-            if (go_AnswerButtons[index].name.Equals("Correct") || go_AnswerButtons[index].name.Equals("Wrong"))
-            {
-                               
-                if (go_AnswerButtons[index].name.Equals("Correct"))
-                {
-
-                    PhotonNetwork.RaiseEvent(EVENT_SLIDER, slider, RaiseEventOptions.Default, SendOptions.SendReliable);
-
-                }
-                
-            }
-
+            ToggleButtons(0);
             PhotonNetwork.RaiseEvent(EVENT_DISPLAY, display, RaiseEventOptions.Default, SendOptions.SendReliable);
+            PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
 
         }
 
@@ -249,12 +228,22 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             return;
         }
         Debug.Log("Result Index:" + index);
-        ToggleButtons(0);
+        
         if (go_AnswerButtons[index].name.Equals("Correct"))
         {
             questionText.text = "Correct";
             Debug.Log("Answer is Correct");
             bool_moveToNextQuestion = true;
+            int[] slider = new int[] { int_Points };
+
+            if (PV1.IsMine)
+            {
+                PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
+            }
+            else {
+                PhotonNetwork.RaiseEvent(EVENT_SLIDER, slider, RaiseEventOptions.Default, SendOptions.SendReliable);
+            }
+                
         }
         else
         {
@@ -267,15 +256,20 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     [PunRPC]
     public void SliderEvent(int index) {
 
-        if (PlayerNumber == 1)
-        {
-            slider1.value = slider1.value + index;
+        if (index == null || index == 0) {
+            index = int_Points;
         }
-        else if (PlayerNumber == 2)
+
+        if (turnNumber == 1)
+        {
+            if (photonView.IsMine)
+            this.slider1.value = slider1.value + index;
+        }
+        else if (turnNumber == 2)
         {
             slider2.value = slider2.value + index;
         }
-        else if (PlayerNumber == 3)
+        else if (turnNumber == 3)
         {
             slider3.value = slider3.value + index;
         }

@@ -49,6 +49,7 @@ public class ReadCSV : MonoBehaviour
                 q.str_WrongAnswer = questions[int_Question_Index].str_WrongAnswer;
                 q.int_Points = Random.Range(1, 3);
                 int_Used_Index[i] = int_Question_Index;
+                break;
             }
             else {
                 int_Question_Index = Random.Range(1, 150);
