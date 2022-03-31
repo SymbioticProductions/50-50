@@ -57,12 +57,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         ToggleButtons(0);
         questionText.text = "Initalising...";
 
-        if (PV2.IsMine)
-        {
-            PV2.RPC("InitalisePlayers", RpcTarget.All);
-            //PV2.RPC("StarterTurn", RpcTarget.All);
-
-        }
+        InitalisePlayers();
     }
 
     void Update()
@@ -74,7 +69,8 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             {
                 bool_Answered_Early = false;
 
-                PV2.RPC("GetNextQuestion", RpcTarget.All);
+                PV2.RPC("CheckTurn", RpcTarget.All);
+                InitaliseSceneAssets();
 
                 timer.bool_LoadNextQuestion = false;
             }
@@ -94,18 +90,18 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
         if (PV2.IsMine)
         {
-            PV2.RPC("InitaliseSceneAssets", RpcTarget.All);
+            InitaliseSceneAssets();
         }
 
     }
 
     //Gets the next question, supposed to be used in the void Update part when the next question is loaded
-    [PunRPC]
+    /*[PunRPC]
     void GetNextQuestion()
     {
         CheckTurn();
         InitaliseSceneAssets();
-    }
+    }*/
 
     [PunRPC]
     void InitalisePlayers()
@@ -151,7 +147,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     }
 
     //Initalises everything, sets the text for the questions, buttons, points text and sets the slider
-    [PunRPC]
+    
     void InitaliseSceneAssets()
     {
         getQuestion.SetQuestion();
@@ -262,8 +258,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
         if (turnNumber == 1)
         {
-            if (photonView.IsMine)
-            this.slider1.value = slider1.value + index;
+            slider1.value = slider1.value + index;
         }
         else if (turnNumber == 2)
         {
@@ -349,14 +344,6 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
             }
 
-            stream.SendNext(this.slider1);
-            stream.SendNext(this.slider1.value);
-            stream.SendNext(this.slider2);
-            stream.SendNext(this.slider2.value);
-            stream.SendNext(this.slider3);
-            stream.SendNext(this.slider3.value);
-            stream.SendNext(this.slider4);
-            stream.SendNext(this.slider4.value);
         }
         else
         {
@@ -386,14 +373,6 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
                 
             }
 
-            this.slider1 = (Slider)stream.ReceiveNext();
-            this.slider1.value = (float)stream.ReceiveNext();
-            this.slider2 = (Slider)stream.ReceiveNext();
-            this.slider2.value = (float)stream.ReceiveNext();
-            this.slider3 = (Slider)stream.ReceiveNext();
-            this.slider3.value = (float)stream.ReceiveNext();
-            this.slider4 = (Slider)stream.ReceiveNext();
-            this.slider4.value = (float)stream.ReceiveNext();
         }
     }
     
@@ -441,7 +420,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
         }
     }
-
+    [PunRPC]
     public void CheckTurn() //disables the answer buttons if its not the player's turn (not working properly)
     {
 
