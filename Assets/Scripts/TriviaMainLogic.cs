@@ -27,7 +27,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     [PunRPC] Timer timer;
 
     [Header("Player")]
-    [SerializeField] public PlayerData player;
+    [SerializeField] public GameObject player;
     [SerializeField] Slider slider1, slider2, slider3, slider4;
 
     public PhotonView PV2;
@@ -37,6 +37,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     public const byte EVENT_TURN = 2;
     public const byte EVENT_DISPLAY = 3;
     public const byte EVENT_SLIDER = 4;
+    public const byte EVENT_CHECKWINNER = 5;
 
     public int turnNumber = 1;
     public int int_Points;
@@ -44,6 +45,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     public bool isPlayerTurn;
 
     public string button1Text, button2Text;
+    public string winner;
 
     private int PlayerNumber = PhotonNetwork.LocalPlayer.ActorNumber;
 
@@ -58,6 +60,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         questionText.text = "Initalising...";
 
         InitalisePlayers();
+                
     }
 
     void Update()
@@ -108,9 +111,18 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
     {
 
         Vector2 spawnPos = new Vector2(0, 0);
-        PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
-        player.str_PlayerName = PhotonNetwork.NickName;
-        Debug.Log("Player: " + player.str_PlayerName + " has joined!");
+
+        if (PV1.IsMine)
+        {
+            
+            player = PhotonNetwork.Instantiate(player.name, spawnPos, Quaternion.identity);
+            player.GetComponent<PlayerData>().str_PlayerName = PhotonNetwork.NickName;
+            player.GetComponent<PlayerData>().int_PlayerScore = 0;
+            player.GetComponent<PlayerData>().int_ThreePointCheck = 0;
+            player.GetComponent<PlayerData>().int_TwoPointCheck = 0;
+        }
+
+        Debug.Log("Player: " + player.GetComponent<PlayerData>().str_PlayerName + " has joined!");
         Debug.Log("PlayerNumber = " + PlayerNumber);
 
         if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
@@ -154,7 +166,8 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         int int_AnswerIndex = Random.Range(1, 10);
         questionText.text = currentQuestion.GetQuestion();
         int_Points = currentQuestion.GetPointValue();
-        pointsText.text = "This Question is worth: " + currentQuestion.GetPoints() + " points";
+        CheckPoints();
+        pointsText.text = "This Question is worth: " + int_Points.ToString() + " points";
 
         for (int i = 0; i < go_AnswerButtons.Length; i++)
         {
@@ -187,6 +200,26 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
 
     }
 
+    public void CheckPoints() {
+
+        Debug.Log("Player " + player.GetComponent<PlayerData>().str_PlayerName + "points = " + player.GetComponent<PlayerData>().ReturnScore());
+
+
+        if (PlayerNumber == turnNumber)
+        {
+            if (player.GetComponent<PlayerData>().int_ThreePointCheck == 1)
+            {
+                int_Points = 2;
+            }
+
+            if (player.GetComponent<PlayerData>().int_TwoPointCheck == 1)
+            {
+                Debug.Log("This Works");
+                int_Points = 1;
+            }
+        }
+    }
+
     //This is assigned to the buttons, says that if either answer button is clicked, it displays cancels the timer and displays the result
     public void AnswerButtonClick(int index)
     {
@@ -195,8 +228,9 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
         {
             PV1.RPC("CancelTimer", RpcTarget.All, 0);
             ToggleButtons(0);
-            bool_Answered_Early = true;
+            bool_Answered_Early = true; 
             PV2.RPC("DisplayResult", RpcTarget.All, index);
+            PV2.RPC("CheckWinner", RpcTarget.All);
             PV2.RPC("IncrementTurn", RpcTarget.All, 1);//For loop, cycles through to next player in index and sets turn to true.
 
         }
@@ -209,6 +243,7 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             PhotonNetwork.RaiseEvent(EVENT_TIMER, reset, RaiseEventOptions.Default, SendOptions.SendReliable);
             ToggleButtons(0);
             PhotonNetwork.RaiseEvent(EVENT_DISPLAY, display, RaiseEventOptions.Default, SendOptions.SendReliable);
+            PhotonNetwork.RaiseEvent(EVENT_CHECKWINNER, 0, RaiseEventOptions.Default, SendOptions.SendReliable);
             PhotonNetwork.RaiseEvent(EVENT_TURN, turn, RaiseEventOptions.Default, SendOptions.SendReliable);
 
         }
@@ -235,6 +270,11 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             if (PV1.IsMine)
             {
                 PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
+
+                if (PlayerNumber == turnNumber) {
+                    player.GetComponent<PlayerData>().AddPoints(int_Points);
+                }
+                
             }
             else {
                 PhotonNetwork.RaiseEvent(EVENT_SLIDER, slider, RaiseEventOptions.Default, SendOptions.SendReliable);
@@ -307,6 +347,11 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
                     int[] slider = (int[])photonEvent.CustomData;
 
                     PV2.RPC("SliderEvent", RpcTarget.All, int_Points);
+
+                    break;
+                case EVENT_CHECKWINNER:
+                   
+                    PV2.RPC("CheckWinner", RpcTarget.All);
 
                     break;
             }
@@ -441,6 +486,41 @@ public class TriviaMainLogic : MonoBehaviourPunCallbacks, IPunObservable, IOnEve
             isPlayerTurn = false;
             ToggleButtons(0);
 
+        }
+    }
+
+    [PunRPC]
+    public void CheckWinner() {
+        if (CheckSliderScore()) {
+            PhotonNetwork.LoadLevel("EndGame");
+        }
+    
+    }
+    public bool CheckSliderScore() {
+
+        if (slider1.value == slider1.maxValue)
+        {
+            winner = "Player 1";
+            Debug.Log("WINNER IS " + winner);
+            return true;
+        }
+        else if (slider2.value == slider2.maxValue)
+        {
+            winner = "Player 2";
+            return true;
+        }
+        else if (slider3.value == slider3.maxValue)
+        {
+            winner = "Player 3";
+            return true;
+        }
+        else if (slider4.value == slider4.maxValue)
+        {
+            winner = "Player 4";
+            return true;
+        }
+        else {
+            return false;
         }
     }
 }

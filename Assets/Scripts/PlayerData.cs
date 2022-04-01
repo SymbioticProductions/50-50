@@ -8,10 +8,10 @@ public class PlayerData : MonoBehaviourPunCallbacks
 {
 
     public string str_PlayerName = "Default_PlayerName";
-    public int int_PlayerScore;
+    public int int_PlayerScore = 0, int_TwoPointCheck = 0, int_ThreePointCheck = 0;
     int int_NumberOfPlayers = 0;
     public bool bool_IsPlayerTurn;
-
+    
     public void SetPlayerName(string str_InputName)
     {
 
@@ -24,9 +24,16 @@ public class PlayerData : MonoBehaviourPunCallbacks
     }
     public void AddPoints(int int_Points)
     {
+        if (int_Points == 3) {
+            int_ThreePointCheck++;
+        } else if (int_Points == 2) {
+            int_TwoPointCheck++;
+        }
 
-        int_PlayerScore = int_PlayerScore + int_Points;
-
+        if (photonView.IsMine) {
+            int_PlayerScore = int_PlayerScore + int_Points;
+        }
+        
     }
 
     public void SetPlayerTurn(bool state)

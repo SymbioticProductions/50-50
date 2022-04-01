@@ -48,6 +48,11 @@ MonoBehaviour:
   - SliderEvent
   - AnswerButtonClick
   - ToggleButtons
+  - CheckScore
+  - CheckBoosts
+  - CheckTurn
+  - CheckPoints
+  - CheckWinner
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

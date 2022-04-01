@@ -1627,7 +1627,7 @@ MonoBehaviour:
   - {fileID: 166421670}
   - {fileID: 1032178344}
   timerImage: {fileID: 871172426}
-  player: {fileID: 5616874272312022331, guid: 6424411dc19ace3499ea9427b0e594c2, type: 3}
+  player: {fileID: 4703399821805632809, guid: 6424411dc19ace3499ea9427b0e594c2, type: 3}
   slider1: {fileID: 6318391448702797367}
   slider2: {fileID: 654485880}
   slider3: {fileID: 76965447}

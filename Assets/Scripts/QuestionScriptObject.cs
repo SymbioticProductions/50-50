@@ -32,10 +32,4 @@ public class QuestionScriptObject : ScriptableObject {
         return int_Points;
     }
 
-    public string GetPoints() {
-        
-        str_Points = int_Points.ToString();
-
-        return str_Points;
-    }
 }
