@@ -1,15 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 
 public class ReadCSV : MonoBehaviour
 {
-
+    List<int> int_Used_Index = new List<int>();
     List<Questions> questions = new List<Questions>();
     [SerializeField] TextAsset ta_Question_Information;
     [SerializeField] QuestionScriptObject q;
-    int int_Number_Of_Questions, int_Points;
+    int int_Number_Of_Questions;
 
     // On start, load the CSV file and read it. Assigns each question to an array separating the right and wrong answers
     void Start() {
@@ -38,24 +39,25 @@ public class ReadCSV : MonoBehaviour
 
         int int_Question_Index = Random.Range(1, 150);
 
-        int[] int_Used_Index = new int[20];
+        while (int_Used_Index.Contains(int_Question_Index)) {
+            Debug.Log("Question rerolled");
 
-        for (int i = 0; i <= int_Used_Index.Length - 1; i++) {
-
-            if (int_Used_Index[i] != int_Question_Index)
+            if (int_Used_Index.Count == 149)
             {
-                q.str_Question = questions[int_Question_Index].str_Question;
-                q.str_RightAnswer = questions[int_Question_Index].str_RightAnswer;
-                q.str_WrongAnswer = questions[int_Question_Index].str_WrongAnswer;
-                q.int_Points = Random.Range(1, 3);
-                int_Used_Index[i] = int_Question_Index;
-                break;
+                int_Used_Index.Clear();
             }
             else {
                 int_Question_Index = Random.Range(1, 150);
             }
-        
+            
         }
+
+        q.str_Question = questions[int_Question_Index].str_Question;
+        q.str_RightAnswer = questions[int_Question_Index].str_RightAnswer;
+        q.str_WrongAnswer = questions[int_Question_Index].str_WrongAnswer;
+        q.int_Points = Random.Range(1, 3);
+            
+        int_Used_Index.Add(int_Question_Index);
     
     }
 
