@@ -1053,6 +1053,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 557666156}
   m_CullTransparentMesh: 1
+--- !u!1 &600666711
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 600666712}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &600666712
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 600666711}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1215.7571, y: 595.60504, z: -2.440542}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &613698075
 GameObject:
   m_ObjectHideFlags: 0
@@ -1639,6 +1670,7 @@ MonoBehaviour:
   isPlayerTurn: 0
   button1Text: 
   button2Text: 
+  winner: 
 --- !u!114 &1177267689
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2693,11 +2725,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_Mode
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -2708,11 +2744,19 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: AnswerButtonClick
       objectReference: {fileID: 0}
     - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: TriviaMainLogic, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[1].m_TargetAssemblyTypeName
       value: TriviaMainLogic, Assembly-CSharp
       objectReference: {fileID: 0}
     - target: {fileID: 3588777301564324510, guid: 89f949aeb18473549a21b49a59c59f30, type: 3}

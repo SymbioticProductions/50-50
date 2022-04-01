@@ -27,6 +27,10 @@ public class Timer : MonoBehaviourPun
         fl_TimerValue = value;
     }
 
+    public void delayTimer(int value) {
+        fl_TimeToShowCorrectAnswer = value;
+    }
+
     void UpdateTimer() {
         fl_TimerValue -= Time.deltaTime;
 

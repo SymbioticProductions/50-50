@@ -49,7 +49,6 @@ MonoBehaviour:
   int_PlayerScore: 0
   int_TwoPointCheck: 0
   int_ThreePointCheck: 0
-  bool_IsPlayerTurn: 0
 --- !u!114 &-7180279811155750855
 MonoBehaviour:
   m_ObjectHideFlags: 0
